@@ -8,47 +8,212 @@
 #include <dt-bindings/zmk/bt.h>
 #include <dt-bindings/zmk/keys.h>
 
-/* Uncomment this block if using RGB
-&led_strip {
-    chain-length = <6>;
-    // chain-length = <31>; // Uncomment if using both per-key and underglow LEDs
-    // chain-length = <25>; // Uncomment if using only per-key LEDs.
-};
- */
+#define NAVI_RIGHT 1
+#define NAVI_LEFT 2
+#define SYMS 3
+#define NUMS 4
+#define FUN 5
+#define ADJ 6
+
+#define RIGHT_HOME_ROW 20 21 22 23
+#define TMUX LA(SPACE)
 
 / {
+    macros {
+        tcopy: tmux_copy_mode {
+            label = "TMUX_COPY_MODE";
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            bindings
+                = <&macro_tap &kp TMUX &kp LBKT>
+                ;
+        };
+
+    };
+};
+
+/ {
+    behaviors {
+
+      mtq: mod_tap_quick_tap {
+          compatible = "zmk,behavior-hold-tap";
+          label = "MOD_TAP_WITH_QUICK_TAP";
+          #binding-cells = <2>;
+          tapping-term-ms = <200>;
+          quick-tap-ms = <175>;
+          flavor = "hold-preferred";
+          bindings = <&kp>, <&kp>;
+      };
+
+      hm: homerow_mods {
+          compatible = "zmk,behavior-hold-tap";
+          label = "HOMEROW_MODS";
+          #binding-cells = <2>;
+          tapping-term-ms = <200>;
+          quick-tap-ms = <175>;
+          flavor = "tap-preferred";
+          bindings = <&kp>, <&kp>;
+      };
+
+      navi_left: navi_left {
+          compatible = "zmk,behavior-mod-morph";
+          label = "NAVI_LEFT";
+          #binding-cells = <0>;
+          bindings = <&lm NAVI_LEFT BSPC>, <&kp DEL>;
+          mods = <(MOD_LSFT|MOD_RSFT)>;
+      };
+
+      lm: layer_mod {
+          compatible = "zmk,behavior-hold-tap";
+          label = "LAYER_HOLD_TAP";
+          #binding-cells = <2>;
+          tapping-term-ms = <200>;
+          quick-tap-ms = <200>;
+          flavor = "tap-preferred";
+          bindings = <&mo>, <&kp>;
+      };
+
+      lh: layer_hold_preferred {
+          compatible = "zmk,behavior-hold-tap";
+          label = "LAYER_HOLD_PREFERRED";
+          #binding-cells = <2>;
+          tapping-term-ms = <200>;
+          quick-tap-ms = <200>;
+          flavor = "hold-preferred";
+          bindings = <&mo>, <&kp>;
+      };
+
+      navi_right: navi_right {
+          compatible = "zmk,behavior-mod-morph";
+          label = "NAVI_RIGHT";
+          #binding-cells = <0>;
+          bindings = <&hmr NAVI_RIGHT SPACE>, <&kp UNDER>;
+          mods = <(MOD_LSFT|MOD_RSFT)>;
+      };
+
+      hmr: homerow_mod_right {
+          compatible = "zmk,behavior-hold-tap";
+          label = "HOMEROW_MOD_RIGHT";
+          #binding-cells = <2>;
+          tapping-term-ms = <150>;
+          quick-tap-ms = <200>;
+          global-quick-tap;
+          flavor = "tap-preferred";
+          bindings = <&mo>, <&kp>;
+          hold-trigger-key-positions = <RIGHT_HOME_ROW>;
+      };
+
+      skq: sticky_key_quick_release {
+          compatible = "zmk,behavior-sticky-key";
+          label = "STICKY_KEY_QUICK_RELEASE";
+          #binding-cells = <1>;
+          bindings = <&kp>;
+          release-after-ms = <1000>;
+          quick-release;
+          ignore-modifiers;
+      };
+
+    };
+
     keymap {
         compatible = "zmk,keymap";
 
         default_layer {
             // ---------------------------------------------------------------------------------------------------------------------------------
-            // |  ESC  |  Q  |  W  |  E   |  R   |  T   |                                          |  Y   |  U    |  I    |  O   |   P   |   \  |
-            // |  TAB  |  A  |  S  |  D   |  F   |  G   |                                          |  H   |  J    |  K    |  L   |   ;   |   '  |
-            // | SHIFT |  Z  |  X  |  C   |  V   |  B   | L SHIFT | L SHIFT |  | LAYER 1 | L SHIFT |  N   |  M    |  ,    |  .   |   /   | CTRL |
-            //                     | GUI  | DEL  | RET  |  SPACE  |   ESC   |  |   RET   |  SPACE  | TAB  | BSPC  | R-ALT |
-            bindings = <
-            &kp ESC   &kp Q &kp W &kp E &kp R &kp T                                                  &kp Y &kp U  &kp I     &kp O   &kp P    &kp BSLH
-            &kp TAB   &kp A &kp S &kp D &kp F &kp G                                                  &kp H &kp J  &kp K     &kp L   &kp SEMI &kp SQT
-            &kp LSHFT &kp Z &kp X &kp C &kp V &kp B &kp LSHFT &kp LSHFT            &mo 1   &kp LSHFT &kp N &kp M  &kp COMMA &kp DOT &kp FSLH &kp RCTRL
-                                  &kp LGUI &kp DEL &kp RET &kp SPACE &kp ESC       &kp RET &kp SPACE &kp TAB &kp BSPC &kp RALT
-            >;
-
-            sensor-bindings = <&inc_dec_kp C_VOL_UP C_VOL_DN &inc_dec_kp PG_UP PG_DN>;
+            // |  TAB     |  Q  |  W  |  F  |  P  |  B  |   |    J    |    L    |  U  |  Y  |  :  |  \   |
+            // | ESC/CTRL |  A  |  R  |  S  |  T  |  V  |   |    M    |    N    |  E  |  I  |  O  |  "   |
+            // | SHFT     |  Z  |  X  |  C  |  D  |  V  |   |    K    |    H    |  ,  |  .  |  /  | SHFT |
+            //                  | NUM | BKSP/NAV  | SYM |   | RET/SYM | SPC/NAV |     |
+                                    bindings = <
+               &kp TAB        &kp Q &kp W &kp F    &kp P &kp B                                                      &kp J &kp L &kp U     &kp Y   &kp SEMI &kp BSLH
+               &mtq LCTRL ESC &kp A &kp R &kp S    &kp T &kp G                                                      &kp M &kp N &kp E     &kp I   &kp O    &hm RCTRL SQT
+               &mt LSHFT TMUX &kp Z &kp X &kp C    &kp D &kp V    &none      &none       &none          &none       &kp K &kp H &kp COMMA &kp DOT &kp FSLH &mt RSHFT TMUX
+                                          &none &mo NUMS &navi_left &mo SYMS &none       &none          &lh SYMS ENTER &navi_right &none &none
+               >;
         };
-        function_layer {
-            // ---------------------------------------------------------------------------------------------------------------------------------
-            // |       |      |BT_CLR|BTSEL0|BTSEL1|BTSEL2|                                         |      |      |      |      |      |      |
-            // |       |      |      |BTSEL3|BTSEL4|      |                                         |      |      |      |      |      |      |
-            // |       |      |      |      |      |      |      |      |      |      |      |      |      |      |      |      |      |      |
-            //                       |      |      |      |      |      |      |      |      |      |      |      |      |
-            bindings = <
-            &trans &trans &bt BT_CLR &bt BT_SEL 0 &bt BT_SEL 1 &bt BT_SEL 2              &trans &trans &trans &trans &trans &trans
-            &trans &trans &trans     &bt BT_SEL 3 &bt BT_SEL 4 &trans                    &trans &trans &trans &trans &trans &trans
-            &trans &trans &trans &trans &trans &trans &trans &trans        &trans &trans &trans &trans &trans &trans &trans &trans
-                                 &trans &trans &trans &trans &trans        &trans &trans &trans &trans &trans
-            >;
 
-            sensor-bindings = <&inc_dec_kp C_VOL_UP C_VOL_DN &inc_dec_kp PG_UP PG_DN>;
+        navi_right {
+            // -----------------------------------------------------------------------------------------
+            // |      |     |     |     |     |     |   |     |      |      |     |     |      |
+            // |      |     |     |     |     |     |   |     | CTRL | SHFT | ALT | GUI |      |
+            // |      |     |     |     |     |     |   |     |      |      |     |     |      |
+            //                    |     |     |     |   |     |      |      |
+            bindings = <
+               &trans &trans &trans &trans &trans &trans                                &trans &trans        &trans     &trans    &trans    &trans
+               &trans &trans &trans &trans &trans &trans                                &trans &skq RCTRL    &skq RSHFT &skq LALT &skq RGUI &trans
+               &trans &trans &trans &trans &trans &trans &trans &trans    &trans &trans &trans &trans        &trans     &trans    &trans    &trans
+                                    &trans &trans &trans &trans &trans    &trans &trans &trans &trans &trans
+            >;
         };
+
+        navi_left {
+            // -----------------------------------------------------------------------------------------
+            // |      |      | GUI+F |       | GUI+`  |         |   | TCOPY | PG_UP | UP   | PG_DN |     |     |
+            // | CAPS |  GUI | LALT  | SHFT  | LCTRL  |         |   | BSPC  | LEFT  | DOWN | RGHT  | DEL |     |
+            // |      | GUI+Z| GUI+X | GUI+C | GUI+V  |  TMUX   |   |       | HOME  | END  |       |     |     |
+            //                       |       | [NAVI] |         |   |  RET  |   -   |      |
+            bindings = <
+                &trans     &trans    &trans    &kp LG(F)  &trans      &kp LG(GRAVE)                               &tcopy    &kp PG_UP &kp UP   &kp PG_DN &trans  &trans
+                &caps_word &skq LGUI &skq LALT &skq LSHFT &skq LCTRL  &trans                                      &kp BSPC  &kp LEFT  &kp DOWN &kp RIGHT &kp DEL &trans
+                &trans     &kp LG(Z) &kp LG(X) &kp LG(C)  &kp LG(V)   &kp TMUX &trans &trans       &trans &trans  &trans    &kp HOME  &kp END  &trans    &trans  &trans
+                                               &trans     &trans      &trans   &trans &trans       &trans &kp RET &kp MINUS &trans    &trans
+            >;
+        };
+
+        symbols {
+            // -----------------------------------------------------------------------------------------
+            // |     |  "  |  <  |  >  |  '  |  .   |          |  &   |  ~  |  [  |  ]  |  %  |     |
+            // | CAPS|  !  |  -  |  +  |  =  |  #   |          |  |   |  :  |  (  |  )  |  ?  |     |
+            // |     |  ^  |  /  |  *  |  \  |  `   |          |  ~   |  $  |  {  |  }  |  @  |     |
+            //                   | REP | BKSP|[SYMS]|          |[SYMS]| SPC | REP |
+            bindings = <
+                &trans     &kp DQT   &kp LT       &kp GT      &kp SQT      &kp DOT                                      &kp AMPS  &kp TILDE   &kp LBKT  &kp RBKT &kp PRCNT &trans
+                &caps_word &kp EXCL  &kp KP_MINUS &kp KP_PLUS &kp KP_EQUAL &kp HASH                                     &kp PIPE  &kp COLON   &kp LPAR  &kp RPAR &kp QMARK &trans
+                &trans     &kp CARET &kp FSLH     &kp STAR    &kp BSLH     &kp GRAVE &trans &trans       &trans &trans  &kp TILDE &kp DLLR    &kp LBRC  &kp RBRC &kp AT    &trans
+                                                  &trans      &key_repeat  &kp BSPC  &trans &trans       &trans &kp RET &kp MINUS &key_repeat &trans
+          >;
+        };
+
+        nums {
+            // -----------------------------------------------------------------------------------------
+            // |     |     |     |      |      |     |          |  +  |  7  |  8  |  9  |  *  |     |
+            // |     | GUI | ALT | SHFT | CTRL |     |          |  -  |  4  |  5  |  6  |  /  |     |
+            // |     |     |     |      |      |     |          |  =  |  1  |  2  |  3  |  .  |  ,  |
+            //                   |[NUMS]|      |     |          | FUN |  0  | ADJ |
+            bindings = <
+                &trans &trans   &trans   &trans    &trans    &trans                                        &kp KP_PLUS  &kp N7  &kp N8 &kp N9 &kp STAR &trans
+                &trans &kp LGUI &kp LALT &kp LSHFT &kp LCTRL &trans                                        &kp KP_MINUS &kp N4  &kp N5 &kp N6 &kp FSLH &trans
+                &trans &trans   &trans   &trans    &trans    &trans  &trans &trans          &trans &trans  &kp KP_EQUAL &kp N1  &kp N2 &kp N3 &kp DOT  &kp COMMA
+                                         &trans    &trans    &trans  &trans &trans          &trans &mo FUN &kp N0       &mo ADJ &trans
+            >;
+        };
+
+    function {
+// -----------------------------------------------------------------------------------------
+// |     |     |     |      |      |     |          | PRINT |  F7  |  F8  |  F9  | F10 |     |
+// |     | GUI | ALT | SHFT | CTRL |     |          | SCRLL |  F4  |  F5  |  F6  | F11 |     |
+// |     |     |     |      |      |     |          | PAUSE |  F1  |  F2  |  F3  | F12 |     |
+//                   |[NUMS]|      |     |          | [FUNC]|  F10 |      |
+      bindings = <
+        &trans &trans   &trans   &trans    &trans    &trans                                  &kp PSCRN       &kp F7 &kp F8 &kp F9 &kp F10 &trans
+        &trans &kp LGUI &kp LALT &kp LSHFT &kp LCTRL &trans                                  &kp SLCK        &kp F4 &kp F5 &kp F6 &kp F11 &trans
+        &trans &trans   &trans   &trans    &trans    &trans &trans &trans     &trans &trans  &kp PAUSE_BREAK &kp F1 &kp F2 &kp F3 &kp F12 &trans
+                                 &trans    &trans    &trans &trans &trans     &trans &mo FUN &kp F10         &trans &trans
+      >;
     };
+
+    adjust {
+// -----------------------------------------------------------------------------------------
+// | BTCLR  | BT0 | BT1 | BT2 | BT3 | BT4 |          |     |        |        |      |     |        |
+// |        |     |     |     |     |     |          |     | VOL_UP | VOL_DN | MUTE |     |        |
+// | BOOTLD |     |     |     |     |     |          |     |        |        |      |     | BOOTLD |
+//                      |     |     |     |          |     |        |        |
+      bindings = <
+        &bt BT_CLR  &bt BT_SEL 0 &bt BT_SEL 1 &bt BT_SEL 2 &bt BT_SEL 3 &bt BT_SEL 4                        &none &none        &none        &none      &none &none
+        &none       &none        &none        &none        &none        &none                               &none &kp C_VOL_UP &kp C_VOL_DN &kp C_MUTE &none &none
+        &bootloader &none        &none        &none        &none        &none &none &none       &none &none &none &none        &none        &none      &none &bootloader
+                                              &none        &none        &none &none &none       &none &none &none &none        &none
+      >;
+    };
+        };
 };
